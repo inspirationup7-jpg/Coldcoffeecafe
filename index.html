@@ -27,8 +27,13 @@ h2{font-size:16px;margin:22px 0 10px}
 .big{width:100%;margin-top:8px;padding:14px;border:2px solid var(--accent);background:var(--card);color:var(--accent);border-radius:14px;font-size:16px;font-weight:700;cursor:pointer}
 .bill{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px;display:none}
 .bill.open{display:block}
-.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)}
-.total{display:flex;justify-content:space-between;font-weight:800;font-size:20px;padding-top:10px}
+.oh{font-weight:800;margin-top:12px;color:var(--accent)}
+.oh:first-child{margin-top:0}
+.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--line)}
+.sub{display:flex;justify-content:space-between;padding:6px 0;font-weight:700}
+.sum{margin-top:12px;padding:10px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+.sum div{display:flex;justify-content:space-between;padding:3px 0}
+.total{display:flex;justify-content:space-between;font-weight:800;font-size:20px;padding-top:8px}
 .empty{color:var(--muted);font-size:14px}
 .sm{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:13px;margin-top:10px;cursor:pointer;padding:0}
 .hint{color:var(--muted);font-size:13px;text-align:center;margin-top:18px}
@@ -72,11 +77,16 @@ h2{font-size:16px;margin:22px 0 10px}
 <script>
 var LINK="https://wa.me/919302553910";
 var ITEMS=[{name:"Masala Chai",price:20,icon:"🍵"},{name:"Cold Coffee",price:80,icon:"🥤"},{name:"Hot Coffee",price:90,icon:"☕"},{name:"Black Coffee",price:50,icon:"☕"},{name:"Lemon Tea",price:80,icon:"🍋"},{name:"Green Tea",price:80,icon:"🍵"},{name:"Ice Blue",price:100,icon:"🧊"},{name:"Cold Brew",price:120,icon:"🥤"},{name:"Redbull Ice Tea",price:150,icon:"🥤"},{name:"Ice Coffee",price:100,icon:"🧊"}];
-var table=null, cart=[], bill=[];
+var KEY="ccc_orders3", EXPIRY=8*60*60*1000;
+var table=null, cart=[], orders=[];
 ITEMS.forEach(function(){cart.push(0)});
 
-try{var s=localStorage.getItem("ccc_bill2");if(s)bill=JSON.parse(s)||[]}catch(e){bill=[]}
-function save(){try{localStorage.setItem("ccc_bill2",JSON.stringify(bill))}catch(e){}}
+try{
+  var s=localStorage.getItem(KEY);
+  if(s){orders=JSON.parse(s)||[]}
+  if(orders.length&&Date.now()-orders[orders.length-1].t>EXPIRY){orders=[]}
+}catch(e){orders=[]}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(orders))}catch(e){}}
 
 var tEl=document.getElementById("tables");
 for(var i=1;i<=5;i++){(function(n){
@@ -108,7 +118,8 @@ function needTable(){
 }
 function cartCount(){var n=0;cart.forEach(function(q){n+=q});return n}
 function cartTotal(){var t=0;cart.forEach(function(q,i){t+=q*ITEMS[i].price});return t}
-function billTotal(){var t=0;bill.forEach(function(b){t+=b.price*b.q});return t}
+function allTotal(){var t=0;orders.forEach(function(o){t+=o.total});return t}
+function tm(t){return new Date(t).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}
 
 function refresh(){
   cart.forEach(function(q,i){document.getElementById("q"+i).textContent=q});
@@ -119,28 +130,39 @@ function refresh(){
 
 function renderBill(){
   var el=document.getElementById("billBody");
-  if(!bill.length){el.innerHTML='<div class="empty">Abhi tak koi order place nahi hua.</div>';return}
+  if(!orders.length){el.innerHTML='<div class="empty">Abhi tak koi order place nahi hua.</div>';return}
   var h="";
-  bill.forEach(function(b){h+='<div class="row"><span>'+b.q+' x '+b.name+'</span><span>₹ '+(b.price*b.q)+'</span></div>'});
-  h+='<div class="total"><span>Total Bill</span><span>₹ '+billTotal()+'</span></div>';
+  orders.forEach(function(o,k){
+    h+='<div class="oh">Order '+(k+1)+' ('+tm(o.t)+')</div>';
+    o.items.forEach(function(b){h+='<div class="row"><span>'+b.q+' x '+b.name+'</span><span>₹ '+(b.price*b.q)+'</span></div>'});
+    h+='<div class="sub"><span>Order '+(k+1)+' ka bill</span><span>₹ '+o.total+'</span></div>';
+  });
+  var tot=allTotal();
+  h+='<div class="sum">';
+  if(orders.length>=2){
+    var last=orders[orders.length-1].total;
+    h+='<div><span>Pehle ke orders ka bill</span><span>₹ '+(tot-last)+'</span></div>';
+    h+='<div><span>Abhi ke order ka bill</span><span>₹ '+last+'</span></div>';
+  }
+  h+='<div class="total"><span>Total Bill</span><span>₹ '+tot+'</span></div></div>';
   el.innerHTML=h;
 }
 
 document.getElementById("place").onclick=function(){
   if(needTable())return;
   if(cartCount()===0)return;
-  var m="Naya Order - Cold Coffee Cafe\nTable No: "+table+"\n\n";
+  var items=[];
+  var m="Naya Order - Cold Coffee Cafe\nTable No: "+table+"\nOrder No: "+(orders.length+1)+"\n\n";
   cart.forEach(function(q,i){
     if(q>0){
       var it=ITEMS[i];
+      items.push({name:it.name,price:it.price,q:q});
       m+=q+" x "+it.name+" = ₹"+(q*it.price)+"\n";
-      var found=false;
-      bill.forEach(function(b){if(b.name===it.name){b.q+=q;found=true}});
-      if(!found)bill.push({name:it.name,price:it.price,q:q});
     }
   });
-  var orderTotal=cartTotal();
-  m+="\nIs order ka Total: ₹"+orderTotal+"\nAb tak ka Total Bill: ₹"+billTotal();
+  var tot=cartTotal();
+  m+="\nIs order ka Total: ₹"+tot;
+  orders.push({t:Date.now(),items:items,total:tot});
   save();renderBill();
   cart=cart.map(function(){return 0});refresh();
   send(m);
@@ -158,16 +180,20 @@ document.getElementById("billToggle").onclick=function(){
 
 document.getElementById("billSend").onclick=function(){
   if(needTable())return;
-  if(!bill.length){toast("Abhi koi order place nahi hua");return}
-  var m="🧾 Bill chahiye - Cold Coffee Cafe\nTable No: "+table+"\n\n";
-  bill.forEach(function(b){m+=b.q+" x "+b.name+" = ₹"+(b.price*b.q)+"\n"});
-  m+="\nTotal Bill: ₹"+billTotal();
+  if(!orders.length){toast("Abhi koi order place nahi hua");return}
+  var m="🧾 Bill chahiye - Cold Coffee Cafe\nTable No: "+table+"\n";
+  orders.forEach(function(o,k){
+    m+="\nOrder "+(k+1)+" ("+tm(o.t)+")\n";
+    o.items.forEach(function(b){m+=b.q+" x "+b.name+" = ₹"+(b.price*b.q)+"\n"});
+    m+="Order "+(k+1)+" ka bill: ₹"+o.total+"\n";
+  });
+  m+="\nTotal Bill: ₹"+allTotal();
   send(m);
 };
 
 document.getElementById("clearBtn").onclick=function(){
-  if(bill.length&&!confirm("Bill saaf karein?"))return;
-  bill=[];save();renderBill();
+  if(orders.length&&!confirm("Bill saaf karein?"))return;
+  orders=[];save();renderBill();
 };
 
 renderBill();refresh();
