@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+here<!DOCTYPE html>
 <html lang="hi">
 <head>
 <meta charset="utf-8">
@@ -9,7 +9,7 @@
 @media (prefers-color-scheme:dark){:root{--bg:#1a120d;--card:#271b14;--text:#f5eadd;--muted:#b7a591;--accent:#d49a6a;--accent-text:#1a120d;--line:#3a2a1f}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4}
-.wrap{max-width:520px;margin:0 auto;padding:20px 16px 40px}
+.wrap{max-width:520px;margin:0 auto;padding:20px 16px 120px}
 header{text-align:center;padding:12px 0 20px}
 .logo{font-size:44px}
 h1{margin:4px 0 2px;font-size:28px;color:var(--accent)}
@@ -18,22 +18,25 @@ h2{font-size:16px;margin:22px 0 10px}
 .tables{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .tables button{padding:12px 0;border:2px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;font-size:17px;font-weight:700;cursor:pointer}
 .tables button.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
-.item{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
-.name{font-weight:700;font-size:18px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+.name{font-weight:700;font-size:17px}
 .price{color:var(--muted);margin-top:2px}
-.right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.qty{display:flex;align-items:center;gap:10px}
-.qty button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:18px;cursor:pointer}
-.order{background:var(--green);color:#fff;border:0;border-radius:10px;padding:10px 20px;font-size:15px;font-weight:700;cursor:pointer}
-.big{width:100%;margin-top:6px;padding:14px;border:2px solid var(--accent);background:var(--card);color:var(--accent);border-radius:14px;font-size:16px;font-weight:700;cursor:pointer}
-.bill{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:22px}
-.bill h2{margin:0 0 8px}
+.qty{display:flex;align-items:center;gap:12px}
+.qty button{width:36px;height:36px;border-radius:50%;border:1px solid var(--accent);background:var(--bg);color:var(--accent);font-size:20px;font-weight:700;cursor:pointer}
+.qty b{min-width:20px;text-align:center;font-size:17px}
+.big{width:100%;margin-top:8px;padding:14px;border:2px solid var(--accent);background:var(--card);color:var(--accent);border-radius:14px;font-size:16px;font-weight:700;cursor:pointer}
+.bill{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px;display:none}
+.bill.open{display:block}
 .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)}
 .total{display:flex;justify-content:space-between;font-weight:800;font-size:20px;padding-top:10px}
 .empty{color:var(--muted);font-size:14px}
 .sm{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:13px;margin-top:10px;cursor:pointer;padding:0}
 .hint{color:var(--muted);font-size:13px;text-align:center;margin-top:18px}
-#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
+#bar{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
+#bar div{max-width:520px;margin:0 auto}
+#place{width:100%;background:var(--green);color:#fff;border:0;border-radius:14px;padding:15px;font-size:17px;font-weight:800;cursor:pointer}
+#place:disabled{background:var(--line);color:var(--muted)}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
 #toast.show{opacity:1}
 </style>
 </head>
@@ -42,34 +45,38 @@ h2{font-size:16px;margin:22px 0 10px}
   <header>
     <div class="logo">☕</div>
     <h1>Cold Coffee Cafe</h1>
-    <p>Apna table chunein aur order karein</p>
+    <p>Table chunein, items chunein, phir order place karein</p>
   </header>
 
   <h2>1. Apna Table Number chunein</h2>
   <div class="tables" id="tables"></div>
 
-  <h2>2. Menu</h2>
+  <h2>2. Menu (jitne chahiye utne chunein)</h2>
   <div id="menu"></div>
-  <button class="big" id="waiter">🔔 Waiter ko bulayein</button>
 
-  <div class="bill">
-    <h2>🧾 Mera Bill</h2>
+  <button class="big" id="waiter">🔔 Waiter ko bulayein</button>
+  <button class="big" id="billToggle">🧾 Mera Bill dekhein</button>
+
+  <div class="bill" id="bill">
     <div id="billBody"></div>
-    <button class="big" id="billBtn">Bill maangein</button>
+    <button class="big" id="billSend">Bill maangein (owner ko bhejein)</button>
     <button class="sm" id="clearBtn">Bill saaf karein (naya customer)</button>
   </div>
 
-  <p class="hint">Order dabate hi WhatsApp khulega aur aapka table number cafe owner ko mil jayega.</p>
+  <p class="hint">Order place karte hi WhatsApp khulega aur table number ke saath order cafe owner ko jayega.</p>
 </div>
+
+<div id="bar"><div><button id="place" disabled>Order place karein</button></div></div>
 <div id="toast"></div>
 
 <script>
 var LINK="https://wa.me/919302553910";
 var ITEMS=[{name:"Masala Chai",price:20,icon:"🍵"},{name:"Cold Coffee",price:80,icon:"🥤"},{name:"Hot Coffee",price:90,icon:"☕"},{name:"Black Coffee",price:50,icon:"☕"},{name:"Lemon Tea",price:80,icon:"🍋"},{name:"Green Tea",price:80,icon:"🍵"},{name:"Ice Blue",price:100,icon:"🧊"},{name:"Cold Brew",price:120,icon:"🥤"},{name:"Redbull Ice Tea",price:150,icon:"🥤"},{name:"Ice Coffee",price:100,icon:"🧊"}];
-var table=null, qty={}, bill=[];
+var table=null, cart=[], bill=[];
+ITEMS.forEach(function(){cart.push(0)});
 
-try{var s=localStorage.getItem("ccc_bill");if(s)bill=JSON.parse(s)||[]}catch(e){bill=[]}
-function save(){try{localStorage.setItem("ccc_bill",JSON.stringify(bill))}catch(e){}}
+try{var s=localStorage.getItem("ccc_bill2");if(s)bill=JSON.parse(s)||[]}catch(e){bill=[]}
+function save(){try{localStorage.setItem("ccc_bill2",JSON.stringify(bill))}catch(e){}}
 
 var tEl=document.getElementById("tables");
 for(var i=1;i<=5;i++){(function(n){
@@ -80,15 +87,12 @@ for(var i=1;i<=5;i++){(function(n){
 
 var mEl=document.getElementById("menu");
 ITEMS.forEach(function(it,idx){
-  qty[idx]=1;
   var d=document.createElement("div");d.className="item";
   d.innerHTML='<div><div class="name">'+it.icon+' '+it.name+'</div><div class="price">₹ '+it.price+'</div></div>'+
-  '<div class="right"><div class="qty"><button aria-label="kam">−</button><b id="q'+idx+'">1</b><button aria-label="zyada">+</button></div>'+
-  '<button class="order">Order</button></div>';
+  '<div class="qty"><button aria-label="kam">−</button><b id="q'+idx+'">0</b><button aria-label="zyada">+</button></div>';
   var bs=d.querySelectorAll("button");
-  bs[0].onclick=function(){if(qty[idx]>1){qty[idx]--;document.getElementById("q"+idx).textContent=qty[idx]}};
-  bs[1].onclick=function(){if(qty[idx]<20){qty[idx]++;document.getElementById("q"+idx).textContent=qty[idx]}};
-  bs[2].onclick=function(){order(idx)};
+  bs[0].onclick=function(){if(cart[idx]>0){cart[idx]--;refresh()}};
+  bs[1].onclick=function(){if(cart[idx]<20){cart[idx]++;refresh()}};
   mEl.appendChild(d);
 });
 
@@ -102,38 +106,62 @@ function needTable(){
   if(!table){toast("Pehle apna Table Number chunein");tEl.scrollIntoView({behavior:"smooth"});return true}
   return false;
 }
-function grandTotal(){var t=0;bill.forEach(function(b){t+=b.price*b.q});return t}
+function cartCount(){var n=0;cart.forEach(function(q){n+=q});return n}
+function cartTotal(){var t=0;cart.forEach(function(q,i){t+=q*ITEMS[i].price});return t}
+function billTotal(){var t=0;bill.forEach(function(b){t+=b.price*b.q});return t}
+
+function refresh(){
+  cart.forEach(function(q,i){document.getElementById("q"+i).textContent=q});
+  var p=document.getElementById("place"),n=cartCount();
+  p.disabled=n===0;
+  p.textContent=n===0?"Order place karein":"Order place karein ("+n+" items, ₹"+cartTotal()+")";
+}
 
 function renderBill(){
   var el=document.getElementById("billBody");
-  if(!bill.length){el.innerHTML='<div class="empty">Abhi koi order nahi hai.</div>';return}
+  if(!bill.length){el.innerHTML='<div class="empty">Abhi tak koi order place nahi hua.</div>';return}
   var h="";
   bill.forEach(function(b){h+='<div class="row"><span>'+b.q+' x '+b.name+'</span><span>₹ '+(b.price*b.q)+'</span></div>'});
-  h+='<div class="total"><span>Total</span><span>₹ '+grandTotal()+'</span></div>';
+  h+='<div class="total"><span>Total Bill</span><span>₹ '+billTotal()+'</span></div>';
   el.innerHTML=h;
 }
 
-function order(idx){
+document.getElementById("place").onclick=function(){
   if(needTable())return;
-  var it=ITEMS[idx],q=qty[idx],total=it.price*q;
-  var found=false;
-  bill.forEach(function(b){if(b.name===it.name){b.q+=q;found=true}});
-  if(!found)bill.push({name:it.name,price:it.price,q:q});
+  if(cartCount()===0)return;
+  var m="Naya Order - Cold Coffee Cafe\nTable No: "+table+"\n\n";
+  cart.forEach(function(q,i){
+    if(q>0){
+      var it=ITEMS[i];
+      m+=q+" x "+it.name+" = ₹"+(q*it.price)+"\n";
+      var found=false;
+      bill.forEach(function(b){if(b.name===it.name){b.q+=q;found=true}});
+      if(!found)bill.push({name:it.name,price:it.price,q:q});
+    }
+  });
+  var orderTotal=cartTotal();
+  m+="\nIs order ka Total: ₹"+orderTotal+"\nAb tak ka Total Bill: ₹"+billTotal();
   save();renderBill();
-  send("Naya Order - Cold Coffee Cafe\nTable No: "+table+"\n"+q+" x "+it.name+" = ₹"+total);
-}
+  cart=cart.map(function(){return 0});refresh();
+  send(m);
+};
 
 document.getElementById("waiter").onclick=function(){
   if(needTable())return;
   send("🔔 Waiter chahiye - Cold Coffee Cafe\nTable No: "+table);
 };
 
-document.getElementById("billBtn").onclick=function(){
+document.getElementById("billToggle").onclick=function(){
+  var b=document.getElementById("bill");b.classList.toggle("open");
+  this.textContent=b.classList.contains("open")?"🧾 Bill chhupayein":"🧾 Mera Bill dekhein";
+};
+
+document.getElementById("billSend").onclick=function(){
   if(needTable())return;
-  if(!bill.length){toast("Abhi koi order nahi hai");return}
-  var m="🧾 Bill chahiye - Cold Coffee Cafe\nTable No: "+table+"\n";
+  if(!bill.length){toast("Abhi koi order place nahi hua");return}
+  var m="🧾 Bill chahiye - Cold Coffee Cafe\nTable No: "+table+"\n\n";
   bill.forEach(function(b){m+=b.q+" x "+b.name+" = ₹"+(b.price*b.q)+"\n"});
-  m+="Total: ₹"+grandTotal();
+  m+="\nTotal Bill: ₹"+billTotal();
   send(m);
 };
 
@@ -142,7 +170,7 @@ document.getElementById("clearBtn").onclick=function(){
   bill=[];save();renderBill();
 };
 
-renderBill();
+renderBill();refresh();
 </script>
 </body>
-</html>￼Enter
+  </html>
