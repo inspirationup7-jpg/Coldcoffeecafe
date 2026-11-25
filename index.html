@@ -1,4 +1,4 @@
-here<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="hi">
 <head>
 <meta charset="utf-8">
@@ -25,6 +25,7 @@ h2{font-size:16px;margin:22px 0 10px}
 .qty button{width:36px;height:36px;border-radius:50%;border:1px solid var(--accent);background:var(--bg);color:var(--accent);font-size:20px;font-weight:700;cursor:pointer}
 .qty b{min-width:20px;text-align:center;font-size:17px}
 .big{width:100%;margin-top:8px;padding:14px;border:2px solid var(--accent);background:var(--card);color:var(--accent);border-radius:14px;font-size:16px;font-weight:700;cursor:pointer}
+.pay{border-color:var(--green);color:var(--green)}
 .bill{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px;display:none}
 .bill.open{display:block}
 .oh{font-weight:800;margin-top:12px;color:var(--accent)}
@@ -65,6 +66,7 @@ h2{font-size:16px;margin:22px 0 10px}
   <div class="bill" id="bill">
     <div id="billBody"></div>
     <button class="big" id="billSend">Bill maangein (owner ko bhejein)</button>
+    <button class="big pay" id="payAsk">💳 Payment QR / UPI ID maangein</button>
     <button class="sm" id="clearBtn">Bill saaf karein (naya customer)</button>
   </div>
 
@@ -189,6 +191,12 @@ document.getElementById("billSend").onclick=function(){
   });
   m+="\nTotal Bill: ₹"+allTotal();
   send(m);
+};
+
+document.getElementById("payAsk").onclick=function(){
+  if(needTable())return;
+  if(!orders.length){toast("Abhi koi order place nahi hua");return}
+  send("💳 Payment ke liye QR / UPI ID chahiye - Cold Coffee Cafe\nTable No: "+table+"\nTotal Bill: ₹"+allTotal());
 };
 
 document.getElementById("clearBtn").onclick=function(){
